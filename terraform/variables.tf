@@ -26,5 +26,12 @@ variable "ec2_ami" {
 
 variable "key_name" {
   description = "Key pair name for ML EC2 instances"
-  default     = "mykey"
+  default     = "AIWL"
+}
+
+variable "access_key" {
+  
+}
+variable "secret_key" {
+  
 }
