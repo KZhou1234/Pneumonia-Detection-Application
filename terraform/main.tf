@@ -1,5 +1,8 @@
 provider "aws" {
   region = "us-east-1"
+  #access key added
+  access_key =  var.access_key 
+  secret_key =  var.secret_key
 }
 
 # VPC
@@ -117,6 +120,21 @@ resource "aws_security_group" "ml_frontend_security_group" {
   vpc_id      = aws_vpc.ml_vpc.id
 
   ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "prometheus"
+  }
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Grafana"
+  }
+
+  ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -187,6 +205,14 @@ resource "aws_security_group" "ml_backend_security_group" {
     protocol        = "tcp"
     security_groups = [aws_security_group.ml_frontend_security_group.id]
     description     = "API access from frontend"
+  }
+  
+  ingress {
+    from_port       = 5001
+    to_port         = 5001
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ml_frontend_security_group.id]
+    description     = "Gunicorn for UI"
   }
   
   ingress {
@@ -293,8 +319,8 @@ resource "aws_instance" "ml_training_server" {
   depends_on = [aws_nat_gateway.ml_nat_gateway]
 
   root_block_device {
-    volume_type           = "gp2"  # Standard General Purpose SSD
-    volume_size           = 20     
+    volume_type           = "gp3"  # Standard General Purpose SSD
+    volume_size           = 30     
     delete_on_termination = true
   }
 
