@@ -166,10 +166,13 @@ The security group for each instance is critical. The instances will only allow 
 
 ## Optimization
 
-**Automation optimization**
+**Automation optimization**  
+
 In this workload, we didn't implement the CI/CD pipeline. The entire process from development to deployment can be automated using Jenkins.  
 
-**Machine Learning Model**
+**Machine Learning Model**  
+
+
 The overall accuracy of the current model now is 90%. It can be tuned to obtain even higher accuracy to make sure the prediction as accurate as possible. 
 
 
