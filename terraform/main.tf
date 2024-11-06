@@ -119,21 +119,8 @@ resource "aws_security_group" "ml_frontend_security_group" {
   name_prefix = "ml_frontend_"
   vpc_id      = aws_vpc.ml_vpc.id
 
-  ingress {
-    from_port   = 9090
-    to_port     = 9090
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "prometheus"
-  }
-  ingress {
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Grafana"
-  }
-
+  
+ 
   ingress {
     from_port   = 22
     to_port     = 22
@@ -186,6 +173,90 @@ resource "aws_security_group" "ml_frontend_security_group" {
     Name = "ml_frontend_security_group"
   }
 }
+# Security Groups
+resource "aws_security_group" "ml_monitoring_security_group" {
+  name_prefix = "ml_monitoring_"
+  vpc_id      = aws_vpc.ml_vpc.id
+
+  
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Grafana"
+  }
+
+ ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Promethus"
+  }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "SSH access"
+  }
+
+  
+  # Allow communication between frontend servers
+  ingress {
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    self            = true
+    description     = "Allow all traffic between frontend servers"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "ml_monitoring_security_group"
+  }
+}
+
+resource "aws_security_group" "ml_ui_security_group" {
+  vpc_id = aws_vpc.ml_vpc.id
+  name   = "ML UI Security"
+
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ml_frontend_security_group.id]
+    description     = "SSH access from frontend"
+  }
+  
+  ingress {
+    from_port       = 5001
+    to_port         = 5001
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ml_frontend_security_group.id]
+    description     = "Gunicorn for UI"
+  }
+  
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "ml_ui_security_group"
+  }
+}
+
 
 resource "aws_security_group" "ml_backend_security_group" {
   vpc_id = aws_vpc.ml_vpc.id
@@ -198,22 +269,23 @@ resource "aws_security_group" "ml_backend_security_group" {
     security_groups = [aws_security_group.ml_frontend_security_group.id]
     description     = "SSH access from frontend"
   }
-
   ingress {
+      from_port   = 9100
+      to_port     = 9100
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+      description = "Node Expoter"
+    }
+  
+    ingress {
     from_port       = 5000
     to_port         = 5000
     protocol        = "tcp"
-    security_groups = [aws_security_group.ml_frontend_security_group.id]
-    description     = "API access from frontend"
+    security_groups = [aws_security_group.ml_ui_group.id]
+    description     = "API access from ui"
   }
   
-  ingress {
-    from_port       = 5001
-    to_port         = 5001
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ml_frontend_security_group.id]
-    description     = "Gunicorn for UI"
-  }
+ 
   
   ingress {
     from_port       = 6379
@@ -270,7 +342,7 @@ resource "aws_instance" "ml_monitoring_server" {
   ami                         = var.ec2_ami
   instance_type               = "t3.micro"
   subnet_id                   = aws_subnet.ml_public_subnet.id
-  vpc_security_group_ids      = [aws_security_group.ml_frontend_security_group.id]
+  vpc_security_group_ids      = [aws_security_group.ml_monitoring_security_group.id]
   key_name                    = var.key_name
   associate_public_ip_address = true
   depends_on = [aws_internet_gateway.ml_internet_gateway]
@@ -299,7 +371,7 @@ resource "aws_instance" "ml_app_server" {
   ami                    = var.ec2_ami
   instance_type          = "t3.medium"
   subnet_id              = aws_subnet.ml_private_subnet_app.id
-  vpc_security_group_ids = [aws_security_group.ml_backend_security_group.id]
+  vpc_security_group_ids = [aws_security_group.ml_ui_security_group.id]
   key_name               = var.key_name
   user_data = "${file("ml_app_server.sh")}"
   depends_on = [aws_nat_gateway.ml_nat_gateway]
