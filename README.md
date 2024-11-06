@@ -115,9 +115,8 @@ The goal of this workload is to a neural network application to detect pneumonia
      ```
      sudo systemctl restart prometheus
      ```
-Make sure Prometheus and Grafana are configured correctly to grab information from the node exporter on the Application Server. 
 
-    ![Alt text](image-3.png)
+  ![Alt text](image-3.png)
 
 4. Run the Gunicorn in Web server also run the Gunicorn in the app server. Go to the public IP address of Nginx, we are abloe to access the application as shown in the picture. 
 
