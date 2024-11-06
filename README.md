@@ -175,5 +175,7 @@ The overall accuracy of the current model now is 90%. It can be tuned to obtain 
 
 
 ## Conclusion  
+
+
 This is my first workload to work with a machine learing application. Provided me hands-on experience with deploying and managing a machine learning application on AWS. By configuring both frontend and backend servers, along with setting up Nginx and Redis, we ensured a secure and scalable architecture. Implementing Prometheus and Grafana enabled proactive monitoring, which is crucial for high-availability applications in healthcare. Overall, this workload strengthened my understanding of MLOps, secure infrastructure, and continuous model optimization for real-world applications.
---- 
+
